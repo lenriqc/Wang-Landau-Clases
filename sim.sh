@@ -7,7 +7,7 @@
 #
 #!/bin/bash
 #./simulacion 2 2 2 20 0 1
-./simulacion 2 1 3 $1 3 0.0001 $2 2 1
+./simulacion 2 1 3 $1 0 0.0001 $2 2 100
 
 # primer argumento: tipo de red: 1-cuad 2-triang
 # Segundo argumento: Tipo de modelo: 1-Ising    2-Antiferro

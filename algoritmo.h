@@ -33,7 +33,7 @@ class Algoritmo{
     virtual void crear_archivos_de_datos()=0;
 //    virtual void datos_de_histograma()=0;
     virtual void obtener_variables_termodinamicas(int a)=0;
-    virtual void imprimir_resultados()=0;
+//    virtual void imprimir_resultados()=0;
     virtual void graficar()=0;
 
     };
@@ -153,9 +153,13 @@ class Wang_Landau_1D: public Algoritmo{
     int numero_de_sweeps;
     int contador_de_sweeps;
     int frecuencia_de_animacion;
-    FILE* gpt;  // gnuplot es un puntero al objeto de tipo FILE
     
+    int estatus;
+    string nombre[7];
+    ofstream archivo[7];
+    ostringstream flujo[7];
  
+    FILE* gp[2];  // gnuplot es un puntero al objeto de tipo FILE
     vector <vector<double> > entropia_2D;
     vector <double> entropia_1D;
     
@@ -173,8 +177,7 @@ class Wang_Landau_1D: public Algoritmo{
     
     vector <vector<double> > resultados;
     
-    ostringstream cad_entropia_1D, cad_histog_1D, cad_entropia_2D, cad_cap_cal, cad_magnet, cad_sucep_magnet, cad_cbinder, cad_po, cad_histog_anim, cad_entropia_1D_final, cad_entropia_2D_final, graf, anim, cad_datos_del_sistema;
-    ofstream arch_entropia_1D, arch_histog_1D, arch_entropia_2D, arch_cap_cal, arch_magnet, arch_sucep_magnet, arch_cbinder, arch_po, arch_histog_anim, arch_entropia_1D_final, arch_entropia_2D_final, arch_datos_del_sistema;
+    ostringstream graf, anim;
     
     
     public:
@@ -217,6 +220,14 @@ class Wang_Landau_1D: public Algoritmo{
         contador_de_parametro_de_orden_1D.resize(t);
         parametro_de_orden_microcanonico_1D.resize(t);
         parametro_de_orden_microcanonico_promedio_1D.resize(t);
+        //NOMBRES
+        nombre[0]="Histograma_animado";
+        nombre[1]="Histograma_1D";
+        nombre[2]="Histograma_2D";
+        nombre[3]="Entropia_1D";
+        nombre[4]="Entropia_2D";
+        nombre[5]="Entropia_1D_final";
+        nombre[6]="Entropia_2D_final";
         //CONSTRUCCIÓN DE VECTORES 2D
         for (int i=0;i<t;i++){
             histograma_2D[i].resize(N+1);
@@ -226,6 +237,7 @@ class Wang_Landau_1D: public Algoritmo{
             parametro_de_orden_microcanonico[i].resize(N+1);
             parametro_de_orden_microcanonico_promedio[i].resize(N+1);
         }
+        //
         resultados.resize(5);
         for (int i=0;i<5;i++){
             resultados[i].resize(cantidad_de_datos);
@@ -242,7 +254,9 @@ class Wang_Landau_1D: public Algoritmo{
         reiniciar_parametro_de_orden_microcanonico_promedio_1D();
         reiniciar_contador_de_parametro_de_orden_1D();
         reiniciar_probabilidad_condicionada(); // no aparece en WL2D
-        //
+        //ABRIR PIPE A GNUPLOT
+        iniciar_conexion_a_gnuplot();
+        //CREAR Y ABRIR ARCHIVOS PARA GUARDAR RESULTADOS
         crear_archivos_de_datos();
         //DATOS INICIALES DE CAMINANTES
         for (int i=0; i<caminantes; i++) {
@@ -253,14 +267,6 @@ class Wang_Landau_1D: public Algoritmo{
         for (int i=0; i<caminantes; i++) {
             cout << "E" << i << ": " <<M[i]->Energia << "\t" << "M" << i << ": " << M[i]->Magnetizacion << "\t" << "PO" << i << ": " << M[i]->Parametro_de_orden << endl;
         }
-        //
-        anim << "set term x11" << endl;
-        anim << "set xrange [" << -E_min << ":" << E_min << "]" << endl;
-//        anim << "set yrange [" << -N << ":" << N << "]" << endl; No va por que es el eje Y, que es la variable dependiente
-        anim << "set title 'Histograma animado'" << endl;
-        anim << "plot \"Histograma_animado_L_" << L << ".txt\" u 1:2 w lp" << endl;
-        //
-        datos_del_sistema();
         //
         estimar_entropia_1D();//NO ESTA EN WL2D Y FALTA LA PROB COND
         //
@@ -276,78 +282,58 @@ class Wang_Landau_1D: public Algoritmo{
         //
         entropia_2D_a_archivo();
         //
-        imprimir_resultados();
+        //imprimir_resultados();
         //
         graficar();
     }
     
     
     void crear_archivos_de_datos(){
-        cad_datos_del_sistema.str("");
-        cad_datos_del_sistema << "Datos_del_sistema_" << especificacion << ".txt";
-        arch_datos_del_sistema.open(cad_datos_del_sistema.str().c_str());
-        //
-        cad_histog_anim.str("");
-        cad_histog_anim << "Histograma_animado" << "_L_" << L << ".txt";
-        //
-        cad_entropia_1D.str("");
-        cad_entropia_1D << "Entropia_1D_" << especificacion << ".txt";
-        arch_entropia_1D.open(cad_entropia_1D.str().c_str());
-        //
-        cad_histog_1D.str("");
-        cad_histog_1D << "Histograma_1D_" << especificacion << ".txt";
-        arch_histog_1D.open(cad_histog_1D.str().c_str());
-        //
-        cad_entropia_2D.str("");
-        cad_entropia_2D << "Entropia_2D_" << especificacion << ".txt";
-        arch_entropia_2D.open(cad_entropia_2D.str().c_str());
-        //
-        cad_entropia_2D_final.str("");
-        cad_entropia_2D_final << "Entropia_2D_final_" << especificacion << ".txt";
-        arch_entropia_2D_final.open(cad_entropia_2D_final.str().c_str());
-        //
-        cad_entropia_1D_final.str("");
-        cad_entropia_1D_final << "Entropia_1D_final_" << especificacion
-        << ".txt";
-        arch_entropia_1D_final.open(cad_entropia_1D_final.str().c_str());
-        //
-/*        cad_cap_cal.str("");
-        cad_cap_cal << "Capacidad_calorifica" << "_L_" << L << "_h_" << h << ".txt";
-        arch_cap_cal.open(cad_cap_cal.str().c_str());
-        //
-        cad_magnet.str("");
-        cad_magnet << "Magnetizacion" << "_L_" << L << "_h_" << h << ".txt";
-        arch_magnet.open(cad_magnet.str().c_str());
-        //
-        cad_sucep_magnet.str("");
-        cad_sucep_magnet << "Suceptibilidad_magnetica" << "_L_" << L << "_h_" << h << ".txt";
-        arch_sucep_magnet.open(cad_sucep_magnet.str().c_str());
-        //
-        cad_cbinder.str("");
-        cad_cbinder << "Cumulante_de_binder" << "_L_" << L << "_h_" << h << ".txt";
-        arch_cbinder.open(cad_cbinder.str().c_str());
-        //
-        cad_po.str("");
-        cad_po << "Parametro_de_orden" << "_L_" << L << "_h_" << h << ".txt";
-        arch_po.open(cad_po.str().c_str());*/
-        //
-        gpt = popen("gnuplot -persist", "w");
+        for (int i=0; i<7; i++) {
+            flujo[i].str("");
+            flujo[i] << nombre[i] << "/" << nombre[i] << "_" << especificacion << ".txt";
+            estatus=mkdir(nombre[i].c_str(),S_IRWXU);
+            if (!estatus) {
+                cout << "Carpeta " << nombre[i] << " creada." << endl;
+            }
+            else{
+                cout << "Carpeta " << nombre[i] << " ya existe." << endl;
+            }
+            archivo[i].open(flujo[i].str().c_str());
+        }
     }
     
-    void datos_del_sistema(){
-        arch_datos_del_sistema << L << "\t" << N << "\t" << J1 << "\t" << J2 << endl;
+    
+    void iniciar_conexion_a_gnuplot(){
+        anim.str("");
+//        anim << "set term wxt 0" << endl;
+        anim << "set xrange [" << -E_min << ":" << E_min << "]" << endl;
+        anim << "set title 'Histograma animado'" << endl;
+        gp[0] = popen("gnuplot -persist", "w");
+        //
+        graf.str("");
+//        graf << "set term wxt 1 persist" << endl;
+        gp[1] = popen("gnuplot -persist", "w");
     }
+    
+    
+    void grafica_evolucion_de_histograma(){
+        anim << "plot \"" << flujo[0].str().c_str() << "\"" << endl;
+        fprintf(gp[0], "%s\n", anim.str().c_str());
+        anim.str("");
+        fflush(gp[0]);
+    }
+
     
     void datos_de_histograma(){
-        arch_histog_anim.open(cad_histog_anim.str().c_str());
-        arch_histog_anim << "#" <<endl;
+        archivo[0].open(flujo[0].str().c_str());
+        archivo[0] << "#" <<endl;
         for (int i=0;i<t;i++){
             if (histograma_1D[i]!=-1) {
-                arch_histog_anim << 4*i-E_min << "\t" << histograma_1D[i] << endl;
+                archivo[0] << 4*i-E_min << "\t" << histograma_1D[i] << endl;
             }
-            
         }
-        arch_histog_anim.close();
+        archivo[0].close();
     }
 
     
@@ -456,12 +442,10 @@ class Wang_Landau_1D: public Algoritmo{
     void implementar_algoritmo(Modelo *MOD){
         double dS = entropia_1D[(MOD->Energia_nueva)/4 + s] - entropia_1D[(MOD->Energia)/4 + s];
         double p;
-        //      cout << Energia_nueva << "   " << Magnetizacion_nueva << "   " << Parametro_de_orden_nuevo << endl;
         if (dS <= 0) {
             p=1;
             MOD->aceptar_cambio(a);
             MOD->actualizar_variables();
-//            cout << "Sí" << endl;
         }
         else {
             p = exp(-dS);
@@ -469,10 +453,8 @@ class Wang_Landau_1D: public Algoritmo{
             if (r<=p){
                 MOD->aceptar_cambio(a);
                 MOD->actualizar_variables();
-//                cout << "Sí" << endl;
             }
             else {
-//                cout << "No acepta cambio" << endl;
             }
         }
         int k = (MOD->Energia)/4 + s;
@@ -483,7 +465,6 @@ class Wang_Landau_1D: public Algoritmo{
         parametro_de_orden_microcanonico_1D[k] += abs(MOD->Parametro_de_orden);
         contador_de_parametro_de_orden[k][l]++;
         parametro_de_orden_microcanonico[k][l] += abs(MOD->Parametro_de_orden);
-        //cout << MOD->Parametro_de_orden << endl;
     }
   
 
@@ -507,11 +488,7 @@ class Wang_Landau_1D: public Algoritmo{
                 contador_de_sweeps = 1;
                 if (anima==1) {
                     datos_de_histograma();
-                    anim << "plot \"Histograma_animado_L_" << L << ".txt\" u 1:2 w lp" << endl;
-                    // cout << "anim es "  << anim.str() << endl;
-                    fprintf(gpt, "%s\n", anim.str().c_str());//¿dónde va el flush?
-                    anim.str("");
-                    fflush(gpt);
+                    grafica_evolucion_de_histograma();
                 }
             }
         }
@@ -542,8 +519,6 @@ class Wang_Landau_1D: public Algoritmo{
 
 
     void estimar_entropia_1D(){
-//        cout << "Para detener presiona cero" << endl;
-//        int trunca;//???
         while (f>f_minima){
             varios_sweeps();
             cout << "f: " << f << endl;
@@ -557,20 +532,17 @@ class Wang_Landau_1D: public Algoritmo{
                 }
             }
             renormalizar_entropia_1D();
-            //
-            arch_entropia_1D << endl << endl;
-            arch_histog_1D << endl << endl;
+            archivo[3] << endl << endl;
+            archivo[1] << endl << endl;
             for (int i=0; i<t; i++){
                 if (entropia_1D[i] !=0) {
-                    arch_entropia_1D << 4*i-E_min << "\t" << entropia_1D[i] << endl;
-                    arch_histog_1D << 4*i-E_min << "\t" << histograma_1D[i] << endl;
+                    archivo[3] << 4*i-E_min << "\t" << entropia_1D[i] << endl;
+                    archivo[1] << 4*i-E_min << "\t" << histograma_1D[i] << endl;
                 }
             }
-            //
             reiniciar_histograma_1D();
             alterar_logaritmo_de_factor_de_modificacion();
             numero_de_refinamientos++;
-        //          varios_sweeps();
         }
     }
     
@@ -579,7 +551,7 @@ class Wang_Landau_1D: public Algoritmo{
     void calcular_probabilidad_condicionada(){
         double norma=0;
         for (int i=0;i<t;i++){
-            cout << "Para E = " << 4*i-E_min << endl;
+//            cout << "Para E = " << 4*i-E_min << endl;
             for (int j=0;j<N+1;j++){
                 if (contador_de_parametro_de_orden[i][j] != -1){
                     norma += contador_de_parametro_de_orden[i][j]+1;//aquí había un +1 que al parecer no va, creo que sí va
@@ -588,12 +560,10 @@ class Wang_Landau_1D: public Algoritmo{
             for (int j=0;j<N+1;j++){
                 if (contador_de_parametro_de_orden[i][j] != -1){
                     probabilidad_condicionada[i][j] = contador_de_parametro_de_orden[i][j] / norma;
-//                    cout << "\t" << "M = " << 2*j-N << " -> " << probabilidad_condicionada[i][j] << endl;
                 }
             }
             norma = 0;
         }
-//        cout << endl;
     }
     
 
@@ -602,8 +572,7 @@ class Wang_Landau_1D: public Algoritmo{
             for (int j=0;j<N+1;j++){
                 if (probabilidad_condicionada[i][j] != -1){
                     entropia_2D[i][j] = entropia_1D[i] + log(probabilidad_condicionada[i][j]);
-                    arch_entropia_2D << 4*i-E_min << "\t" << 2*j-N << "\t" << entropia_2D[i][j] << endl;
-                   // cout << 4*i-E_min << 2*j-N
+                    archivo[4] << 4*i-E_min << "\t" << 2*j-N << "\t" << entropia_2D[i][j] << endl;
                 }
             }
         }
@@ -625,7 +594,6 @@ class Wang_Landau_1D: public Algoritmo{
             for (int j=0;j<N+1;j++){
                 if ( contador_de_parametro_de_orden[i][j] != -1){
                     parametro_de_orden_microcanonico_promedio[i][j] = ((parametro_de_orden_microcanonico[i][j] + 1.)/(contador_de_parametro_de_orden[i][j] + 1.));
-                    //cout << 4*i-E_min << "\t" << 2*j-N << "\t" << parametro_de_orden_microcanonico_promedio[i][j] << endl;
                 }
             }
         }
@@ -633,43 +601,35 @@ class Wang_Landau_1D: public Algoritmo{
     
     
     void entropia_1D_a_archivo(){
-        arch_entropia_1D_final.open(cad_entropia_1D_final.str().c_str());
-        arch_entropia_1D_final << "#" << endl;
+        archivo[5] << "Energía \t Magnetización \t Entropía \t P.O." << endl;
         for (int i=0;i<t;i++){
             if (entropia_1D[i]!=0) {
-                arch_entropia_1D_final << 4*i-E_min << "\t" << entropia_1D[i] << "\t" <<parametro_de_orden_microcanonico_promedio_1D[i] << endl;
+                archivo[5] << 4*i-E_min << "\t" << entropia_1D[i] << "\t" <<parametro_de_orden_microcanonico_promedio_1D[i] << endl;
             }
         }
-        arch_entropia_1D_final.close();
+        archivo[5].close();
     }
     
     
     void entropia_2D_a_archivo(){
-        arch_entropia_2D_final.open(cad_entropia_2D_final.str().c_str());
-        arch_entropia_2D_final << "#" << endl;
+        archivo[6] << "Energía \t Magnetización \t Entropía \t P.O." << endl;
         for (int i=0;i<t;i++){
             for (int j=0;j<N+1;j++){
                 if ( entropia_2D[i][j] != 0){
-                    arch_entropia_2D_final << 4*i-E_min << "\t" << 2*j-N << "\t" << entropia_2D[i][j] << "\t" << parametro_de_orden_microcanonico_promedio[i][j] << endl;
+                    archivo[6] << 4*i-E_min << "\t" << 2*j-N << "\t" << entropia_2D[i][j] << "\t" << parametro_de_orden_microcanonico_promedio[i][j] << endl;
                 }
             }
         }
-        arch_entropia_2D_final.close();
+        archivo[6].close();
     }
 
-    
     
     void encontrar_constante_de_renormalizacion(){
         constante_de_renormalizacion = 0;
         int E=0;
         int M=0;
-        cout << "Valor de beta: " << beta << endl;
         for (int i=0;i<t;i++){
             E = 4*i-E_min;
-            /*for (int j=0;j<N+1;j++){
-             cout << "\t" << beta*(J1*E-J2*h*M) << "\t";
-                    if ((entropia_1D[i] - beta*(J1*E))>=constante_de_renormalizacion){
-                        constante_de_renormalizacion = entropia_1D[i] - beta*(J1*E-J2*h*M);*/
             for (int j=0;j<N+1;j++){
                 if ((entropia_2D[i][j] - beta*(J1*E))>=constante_de_renormalizacion){
                     M = 2*j-N;
@@ -677,7 +637,6 @@ class Wang_Landau_1D: public Algoritmo{
                 }
             }
         }
-        cout << "Renormalización: " << constante_de_renormalizacion << endl;
     }
     
     
@@ -693,37 +652,17 @@ class Wang_Landau_1D: public Algoritmo{
         double exponente=0;
         int E=0;
         int M=0;
-        /*for (int i=0;i<t;i++){
-            if(entropia_1D[i] != 0){
-                E = 4*i-E_min;
-                        exponente = entropia_1D[i] - (beta)*(E) - constante_de_renormalizacion;
-                        //cout << "exponente: " << exponente << endl;
-                        funcion_de_particion_2D += exp(exponente);
-                        energia_promedio += (abs(E))*exp(exponente);
-                        energia_promedio_cuadrada += (abs(E*E))*exp(exponente);
-                        magnetizacion_promedio += (abs(parametro_de_orden_microcanonico_promedio_1D[i]))*exp(exponente);
-                        //cout << "Magnetización_promedio...sumando: " << magnetizacion_promedio << endl;
-                        
-                     //   magnetizacion_cuadrada_promedio += (abs(M*M))*exp(exponente);
-                       // magnetizacion_cuarta_promedio += pow(M,4.)*exp(exponente);
-                        parametro_de_orden_promedio += abs(parametro_de_orden_microcanonico_promedio_1D[i])*exp(exponente);
-            }
-        }*/
         for (int i=0;i<t;i++){
             if(entropia_1D[i] != 0){
                 E = 4*i-E_min;
                 for (int j=0;j<N+1;j++){
                     if(probabilidad_condicionada[i][j] != -1){
                         M = 2*j-N;
-                        //cout << M << endl;
                         exponente = entropia_2D[i][j] - (beta)*(E-J2*h*M) - constante_de_renormalizacion;
-                        //cout << "exponente: " << exponente << endl;
                         funcion_de_particion_2D += exp(exponente);
                         energia_promedio += (abs(E))*exp(exponente);
                         energia_promedio_cuadrada += (abs(E*E))*exp(exponente);
                         magnetizacion_promedio += (abs(M))*exp(exponente);
-                        //cout << "Magnetización_promedio...sumando: " << magnetizacion_promedio << endl;
-
                         magnetizacion_cuadrada_promedio += (abs(M*M))*exp(exponente);
                         magnetizacion_cuarta_promedio += pow(M,4.)*exp(exponente);
                         parametro_de_orden_promedio += (parametro_de_orden_microcanonico_promedio[i][j])*exp(exponente);
@@ -731,12 +670,6 @@ class Wang_Landau_1D: public Algoritmo{
                 }
             }
         }
-        cout << "Magnetización_promedio: " << magnetizacion_promedio << endl;
-        cout << "función de partición: " << funcion_de_particion_2D << endl;
-      /*cout << "energia promedio: " << energia_promedio << endl;
-      cout << "funcion_de_particion al cuadrado: " << funcion_de_particion_2D*funcion_de_particion_2D << endl;
-      cout << "energia_promedio_cuadrada: " << energia_promedio_cuadrada << endl;
-      */
         resultados[0][k] = (energia_promedio_cuadrada/funcion_de_particion_2D - (energia_promedio*energia_promedio)/(funcion_de_particion_2D*funcion_de_particion_2D))*(1./N) ;
         resultados[1][k] = magnetizacion_promedio/(N*funcion_de_particion_2D);
         resultados[2][k] = (magnetizacion_cuadrada_promedio/funcion_de_particion_2D - (magnetizacion_promedio*magnetizacion_promedio)/(funcion_de_particion_2D*funcion_de_particion_2D))/N;
@@ -746,7 +679,7 @@ class Wang_Landau_1D: public Algoritmo{
     }
     
     
-    void imprimir_resultados(){
+/*    void imprimir_resultados(){
         arch_cap_cal << endl << endl;
         arch_magnet << endl << endl;
         arch_sucep_magnet << endl << endl;
@@ -769,52 +702,24 @@ class Wang_Landau_1D: public Algoritmo{
             temperatura += 0.1;
         }
     //  cout << "número de refinamientos: " << numero_de_refinamientos -1 << endl;
-    }
+    }*/
     
-    void graficar(){  
-        graf.str("");
-        graf << "f=1.0" << endl;
-        graf << "set term wxt 0" << endl;
-/*        graf << "set title 'Capacidad_calorifica'" << endl;
-        graf << "plot \"Capacidad_calorifica_L_" << L << "_h_" << h << ".txt\" u 1:2 w lp" << endl;
-        graf << "set term wxt 1" << endl;
-        graf << "set title 'Magnetizacion'" << endl;
-        graf << "plot \"Magnetizacion_L_" << L << "_h_" << h << ".txt\" u 1:2 w lp" << endl;
-        graf << "set term wxt 2" << endl;
-        graf << "set title 'Suceptibilidad_magnetica'" << endl;
-        graf << "plot \"Suceptibilidad_magnetica_L_" << L << "_h_" << h << ".txt\" u 1:2 w lp" << endl;
-        graf << "set term wxt 3" << endl;
-        graf << "set title 'Cumulante_de_binder'" << endl;
-        graf << "plot \"Cumulante_de_binder_L_" << L << "_h_" << h << ".txt\" u 1:2 w lp" << endl;
-        graf << "set term wxt 4" << endl;
-        graf << "set title 'Parametro_de_orden'" << endl;
-        graf << "plot \"Parametro_de_orden_L_" << L << "_h_" << h << ".txt\" u 1:2 w lp" << endl;*/
-        graf << "set term wxt 7" << endl;
-        graf << "set title 'Entropía 1D final'" << endl;
-        graf << "plot \"Entropia_1D_" << especificacion << ".txt\" index " << numero_de_refinamientos-1 << " u 1:2 " << endl;
-        graf << "set term wxt 8" << endl;
-        graf << "set title 'Histograma 1D'" << endl;
-        graf << "plot for [j=0:" << numero_de_refinamientos-1 << "]  \"Histograma_1D_" << especificacion << ".txt\" index j u 1:2 title gprintf(\"f = %f\", f/2**j)" << endl;
-/*        graf << "set term wxt 5" << endl;
-        graf << "set title 'Entropia'" << endl;
-        graf << "splot for [j=0:" << numero_de_refinamientos-1 << "]  \"Entropia_2D_" << especificacion << ".txt\" index j u 1:2 title gprintf(\"f = %f\", f/2**j) " << endl;*/
-        graf << "set term wxt 6" << endl;
-        graf << "set title 'Entropia'" << endl;
-        graf << "splot \"Entropia_2D_" << especificacion << ".txt\" u 1:2:3 " << endl;
-        FILE* gp;  // gnuplot es un puntero al objeto de tipo FILE
-        gp = popen("gnuplot -persist", "w");
-        fprintf(gp, "%s\n", graf.str().c_str());
-        fflush(gp);
-        fflush(gpt);
-        
-        //cout << endl;
-        //int espera;
-        //cin >> espera;
+    void graficar(){
+        graf << "encabezado = system('head -1 " << flujo[6].str().c_str() << " ')" << endl;
+        graf << "set xlabel word(encabezado,1)" << endl;
+        graf << "set ylabel word(encabezado,2)" << endl;
+        graf << "set zlabel word(encabezado,3)" << endl;
+        graf << "splot \"" << flujo[6].str().c_str() << "\" using 1:2:3" << endl;
+        fprintf(gp[1], "%s\n", graf.str().c_str());
+        fflush(gp[1]);
+/*        cout << endl;
+        int espera;
+        cin >> espera;*/
     }
-    
-
 
 };
+
+
 
 
 
@@ -844,18 +749,17 @@ class Wang_Landau_2D: public Algoritmo{
     int numero_de_sweeps;
     int contador_de_sweeps;
     int frecuencia_de_animacion;
-    FILE* gpt;
-/*    double Energia, Energia_nueva, dE;
-    double Magnetizacion, Magnetizacion_nueva, dM;
-    double Parametro_de_orden, Parametro_de_orden_nuevo, dPo;*/
-        
+    FILE* gp[2];
+    int estatus;
+    string nombre[13];
+    ofstream archivo[13];
+    ostringstream flujo[13];
+    //
     vector <vector<double> > entropia_2D;
     vector <double> entropia_1D;
-
     vector <int> histograma_1D;
     vector <vector<int> > histograma_2D;
     vector <vector<double> > probabilidad_condicionada;
-        
     vector <vector<int> > contador_de_parametro_de_orden;
     vector <vector<double> > parametro_de_orden_microcanonico;
     vector <vector<double> > parametro_de_orden_microcanonico_promedio;
@@ -864,11 +768,9 @@ class Wang_Landau_2D: public Algoritmo{
     vector <double> parametro_de_orden_microcanonico_promedio_1D;
         
     vector <vector<double> > resultados;
-
     //ARCHIVOS
-    ostringstream cad_entropia_1D, cad_histog_2D, cad_entropia_2D, cad_cap_cal, cad_magnet, cad_sucep_magnet, cad_cbinder, cad_po, cad_histog_anim, cad_entropia_1D_final, cad_entropia_2D_final, graf, anim, cad_datos_del_sistema;
-    ofstream arch_entropia_1D, arch_histog_2D, arch_entropia_2D, arch_cap_cal, arch_magnet, arch_sucep_magnet, arch_cbinder, arch_po, arch_histog_anim, arch_entropia_1D_final, arch_entropia_2D_final, arch_datos_del_sistema;
-
+    ostringstream graf, anim, cad_datos_del_sistema;
+    //
     public:
     Wang_Landau_2D(vector<Modelo*> mod, string descripcion, int Caminantes, int l_de_red, double h_exter, double factor_min, int vecinos, int Anim, int frec_de_anim):h(h_exter) {
         especificacion = descripcion;
@@ -897,13 +799,11 @@ class Wang_Landau_2D: public Algoritmo{
         s = E_min/4;
         t = vecinos*N/paso + 1;
         anima = Anim;
-
-
+        //VECTORES
         entropia_1D.resize(t);
         histograma_1D.resize(t);
         entropia_2D.resize(t);
         histograma_2D.resize(t);
-        
         probabilidad_condicionada.resize(t);
         contador_de_parametro_de_orden.resize(t);
         parametro_de_orden_microcanonico.resize(t);
@@ -911,8 +811,21 @@ class Wang_Landau_2D: public Algoritmo{
         contador_de_parametro_de_orden_1D.resize(t);
         parametro_de_orden_microcanonico_1D.resize(t);
         parametro_de_orden_microcanonico_promedio_1D.resize(t);
-
-        
+        //NOMBRES
+        nombre[0]="Histograma_animado";
+        nombre[1]="Histograma_1D";
+        nombre[2]="Histograma_2D";
+        nombre[3]="Entropia_1D";
+        nombre[4]="Entropia_2D";
+        nombre[5]="Entropia_1D_final";
+        nombre[6]="Entropia_2D_final";
+        nombre[7]="Parametro_de_orden";
+        nombre[8]="Energia";
+        nombre[9]="Magnetizacion";
+        nombre[10]="Capacidad_calorifica";
+        nombre[11]="Susceptibilidad_magnetica";
+        nombre[12]="Cumulante_de_binder";
+        //CONSTRUCCIÓN DE VECTORES 2D
         for (int i=0;i<t;i++){
             histograma_2D[i].resize(N+1);
             entropia_2D[i].resize(N+1);
@@ -921,42 +834,33 @@ class Wang_Landau_2D: public Algoritmo{
             parametro_de_orden_microcanonico[i].resize(N+1);
         parametro_de_orden_microcanonico_promedio[i].resize(N+1);
         }
-      
+        //
         resultados.resize(5);
         for (int i=0;i<5;i++){
             resultados[i].resize(cantidad_de_datos);
         }
-
+        //INICIALIZANDO VECTORES
         reiniciar_entropia_1D();
         reiniciar_entropia_2D();
         reiniciar_histograma_1D(); //no aparece en WL2D
         reiniciar_histograma_2D();
-
         reiniciar_parametro_de_orden_microcanonico();
         reiniciar_parametro_de_orden_microcanonico_promedio();
         reiniciar_contador_de_parametro_de_orden();
         reiniciar_probabilidad_condicionada(); // no aparece en WL2D
-
+        //ABRIR PIPE A GNUPLOT
+        iniciar_conexion_a_gnuplot();
+        //CREAR Y ABRIR ARCHIVOS PARA GUARDAR RESULTADOS
         crear_archivos_de_datos();
-
         //DATOS INICIALES DE CAMINANTES
         for (int i=0; i<caminantes; i++) {
             M[i]->Energia = M[i]->energia_configuracional();
             M[i]->Magnetizacion = M[i]->magnetizacion();
             M[i]->Parametro_de_orden = M[i]->parametro_de_orden();
         }
-
         for (int i=0; i<caminantes; i++) {
             cout << "E" << i << ": " <<M[i]->Energia << "\t" << "M" << i << ": " << M[i]->Magnetizacion << "\t" << "PO" << i << ": " << M[i]->Parametro_de_orden << endl;
         }
-
-        anim << "set term x11" << endl;
-        anim << "set xrange [" << -E_min << ":" << E_min << "]" << endl;
-        anim << "set yrange [" << -N << ":" << N << "]" << endl;
-        anim << "set title 'Histograma animado'" << endl;
-        anim << "splot \"Histograma_animado_L_" << L << ".txt\" u 1:2:3 w lp" << endl;
-        //
-        datos_del_sistema();
         //
         estimar_entropia_2D();
         //
@@ -968,81 +872,60 @@ class Wang_Landau_2D: public Algoritmo{
         //
         entropia_2D_a_archivo();
         //
-        imprimir_resultados();
+        //imprimir_resultados();
         //
         graficar();
     }
 
 
     void crear_archivos_de_datos(){
-        cad_datos_del_sistema.str("");
-        cad_datos_del_sistema << "Datos_del_sistema_" << especificacion << ".txt";
-        arch_datos_del_sistema.open(cad_datos_del_sistema.str().c_str());
-        //
-        cad_histog_anim.str("");
-        cad_histog_anim << "Histograma_animado" << "_L_" << L << ".txt";
-        //
-        cad_entropia_1D.str("");
-        cad_entropia_1D << "Entropia_1D_" << especificacion << ".txt";
-        arch_entropia_1D.open(cad_entropia_1D.str().c_str());
-        //
-        cad_histog_2D.str("");
-        cad_histog_2D << "Histograma_2D_" << especificacion << ".txt";
-        arch_histog_2D.open(cad_histog_2D.str().c_str());
-        //
-        cad_entropia_2D.str("");
-        cad_entropia_2D << "Entropia_2D_" << especificacion <<  ".txt";
-        arch_entropia_2D.open(cad_entropia_2D.str().c_str());
-        //
-        cad_entropia_2D_final.str("");
-        cad_entropia_2D_final << "Entropia_2D_final_" << especificacion << ".txt";
-        arch_entropia_2D_final.open(cad_entropia_2D_final.str().c_str());
-        //
-        cad_entropia_1D_final.str("");
-        cad_entropia_1D_final << "Entropia_1D_final_" << especificacion << ".txt";
-        arch_entropia_1D_final.open(cad_entropia_1D_final.str().c_str());
-        //
-        cad_cap_cal.str("");
-        cad_cap_cal << "Capacidad_calorifica" << "_L_" << L << "_h_" << h << ".txt";
-        arch_cap_cal.open(cad_cap_cal.str().c_str());
-        //
-        cad_magnet.str("");
-        cad_magnet << "Magnetizacion" << "_L_" << L << "_h_" << h << ".txt";
-        arch_magnet.open(cad_magnet.str().c_str());
-        //
-        cad_sucep_magnet.str("");
-        cad_sucep_magnet << "Suceptibilidad_magnetica" << "_L_" << L << "_h_" << h << ".txt";
-        arch_sucep_magnet.open(cad_sucep_magnet.str().c_str());
-        //
-        cad_cbinder.str("");
-        cad_cbinder << "Cumulante_de_binder" << "_L_" << L << "_h_" << h << ".txt";
-        arch_cbinder.open(cad_cbinder.str().c_str());
-        //
-        cad_po.str("");
-        cad_po << "Parametro_de_orden" << "_L_" << L << "_h_" << h << ".txt";
-        arch_po.open(cad_po.str().c_str());
-        //
-        gpt = popen("gnuplot -persist", "w");
+        for (int i=0; i<7; i++) {
+            flujo[i].str("");
+            flujo[i] << nombre[i] << "/" << nombre[i] << "_" << especificacion << ".txt";
+            estatus=mkdir(nombre[i].c_str(),S_IRWXU);
+            if (!estatus) {
+                cout << "Carpeta " << nombre[i] << " creada." << endl;
+            }
+            else{
+                cout << "Carpeta " << nombre[i] << " ya existe." << endl;
+            }
+            archivo[i].open(flujo[i].str().c_str());
+        }
     }
     
     
-    void datos_del_sistema(){
-        arch_datos_del_sistema << L << "\t" << N << "\t" << h << "\t" << J1 << "\t" << J2 << endl;
+    void iniciar_conexion_a_gnuplot(){
+        anim.str("");
+//        anim << "set term wxt 0" << endl;
+        anim << "set xrange [" << -E_min << ":" << E_min << "]" << endl;
+        anim << "set title 'Histograma animado'" << endl;
+        gp[0] = popen("gnuplot -persist", "w");
+        //
+        graf.str("");
+//        graf << "set term wxt 1 persist" << endl;
+        gp[1] = popen("gnuplot -persist", "w");
+    }
+    
+    void grafica_evolucion_de_histograma(){
+        anim << "plot \"" << flujo[0].str().c_str() << "\"" << endl;
+        fprintf(gp[0], "%s\n", anim.str().c_str());
+        anim.str("");
+        fflush(gp[0]);
     }
     
     
     void datos_de_histograma(){
-        arch_histog_anim.open(cad_histog_anim.str().c_str());
-        arch_histog_anim << "#" <<endl;
+        archivo[0].open(flujo[0].str().c_str());
+        archivo[0] << "#" <<endl;
         for (int i=0;i<t;i++){
             for (int j=0; j<N+1; j++) {
                 if (histograma_2D[i][j]!=-1) {
-                arch_histog_anim << 4*i-E_min << "\t" << 2*j-N << "\t" << histograma_2D[i][j] << endl;
+                archivo[0] << 4*i-E_min << "\t" << 2*j-N << "\t" << histograma_2D[i][j] << endl;
                 }
             }
             
         }
-        arch_histog_anim.close();
+        archivo[0].close();
     }
 
     
@@ -1153,7 +1036,6 @@ class Wang_Landau_2D: public Algoritmo{
     void implementar_algoritmo(Modelo *MOD){
         double dS = entropia_2D[(MOD->Energia_nueva)/4 + s][(MOD->Magnetizacion_nueva)/2 + N/2] - entropia_2D[(MOD->Energia)/4 + s][(MOD->Magnetizacion)/2 + N/2];
         double p;
-//      cout << MOD->Energia_nueva << "   " << MOD->Magnetizacion_nueva << "   " << MOD->Parametro_de_orden_nuevo << endl;
         if (dS <= 0) {
             p=1;
             MOD->aceptar_cambio(a);
@@ -1165,10 +1047,8 @@ class Wang_Landau_2D: public Algoritmo{
             if (r<=p){
                 MOD->aceptar_cambio(a);
                 MOD->actualizar_variables();
-                //                cout << "Sí" << endl;
             }
             else{
-//                cout << "No acepta cambio" << endl;
             }
         }
         int k = (MOD->Energia)/4 + s;
@@ -1189,6 +1069,7 @@ class Wang_Landau_2D: public Algoritmo{
         }
     }
     
+    
     void varios_sweeps(){
         for (int i=0; i<numero_de_sweeps; i++) {
             sweep();
@@ -1199,11 +1080,7 @@ class Wang_Landau_2D: public Algoritmo{
                 contador_de_sweeps = 1;
                 if (anima==1) {
                     datos_de_histograma();
-                    anim << "splot \"Histograma_animado_L_" << L << ".txt\" u 1:2:3 w lp" << endl;
-                    // cout << "anim es "  << anim.str() << endl;
-                    fprintf(gpt, "%s\n", anim.str().c_str());//¿dónde va el flush?
-                    anim.str("");
-                    fflush(gpt);
+                    grafica_evolucion_de_histograma();
                 }
             }
         }
@@ -1270,32 +1147,26 @@ class Wang_Landau_2D: public Algoritmo{
                     }
                     else {
                         varios_sweeps();
-//                        l=0;
-//                        cout << "detenido en l=" << l << endl;
                     }
                 }
                 k++;
             }
-            //
             renormalizar_entropia_2D();
-            //
-            arch_entropia_2D << endl << endl;
-            arch_histog_2D << endl << endl;
+            archivo[4] << endl << endl;
+            archivo[2] << endl << endl;
             for (int i=0; i<t; i++){
                 for (int j=0; j<N+1; j++){
                     if (entropia_2D[i][j] != 0) {
-                        arch_entropia_2D << 4*i-E_min << "\t" << 2*j-N << "\t" << entropia_2D[i][j] << endl;
-                        arch_histog_2D << 4*i-E_min << "\t" << 2*j-N << "\t" << histograma_2D[i][j] << endl;
+                        archivo[4] << 4*i-E_min << "\t" << 2*j-N << "\t" << entropia_2D[i][j] << endl;
+                        archivo[2] << 4*i-E_min << "\t" << 2*j-N << "\t" << histograma_2D[i][j] << endl;
                     }
                 }
             }
-            //
             alterar_logaritmo_de_factor_de_modificacion();
             numero_de_refinamientos++;
             reiniciar_histograma_2D();
         }
     }
-
 
 
     void estimar_entropia_1D(){
@@ -1305,7 +1176,7 @@ class Wang_Landau_2D: public Algoritmo{
                     entropia_1D[i] += log(entropia_2D[i][j]);
                 }
             }
-            arch_entropia_1D << 4*i-E_min << "\t" << entropia_1D[i] << endl;
+            archivo[3] << 4*i-E_min << "\t" << entropia_1D[i] << endl;
         }
     }
 
@@ -1315,35 +1186,33 @@ class Wang_Landau_2D: public Algoritmo{
             for (int j=0;j<N+1;j++){
                 if ( contador_de_parametro_de_orden[i][j] != -1){
                     parametro_de_orden_microcanonico_promedio[i][j] = ((parametro_de_orden_microcanonico[i][j] + 1.)/(contador_de_parametro_de_orden[i][j] + 1.));
-//                    cout << "P.O " << i << "," << j << ": " <<parametro_de_orden_microcanonico_promedio[i][j] << endl;
                 }
             }
         }
-//        cout << "P.O: " << parametro_de_orden_microcanonico_promedio[i][j] << endl;
     }
     
     void entropia_1D_a_archivo(){
-        arch_entropia_1D_final << "#" <<endl;
+        archivo[5] << "Energía \t Magnetización \t Entropía \t P.O." << endl;
         for (int i=0;i<t;i++){
             if (entropia_1D[i]!=-1) {
-                arch_entropia_1D_final << 4*i-E_min << "\t" << entropia_1D[i] << parametro_de_orden_microcanonico_promedio_1D[i] << endl;
+                archivo[5] << 4*i-E_min << "\t" << entropia_1D[i] << parametro_de_orden_microcanonico_promedio_1D[i] << endl;
             }
         }
-        arch_entropia_1D_final.close();
+        archivo[5].close();
     }
     
     
     void entropia_2D_a_archivo(){
-        arch_entropia_2D_final << "#" <<endl;
+        archivo[6] << "Energía \t Magnetización \t Entropía \t P.O." << endl;
         for (int i=0;i<t;i++){
             for (int j=0;j<N+1;j++){
                 if ( entropia_2D[i][j] != 0){
                     //cout << "chechando: " << entropia_2D[i][j] << endl;
-                    arch_entropia_2D_final << 4*i-E_min << "\t" << 2*j-N << "\t" << entropia_2D[i][j] << "\t" << parametro_de_orden_microcanonico_promedio[i][j] << endl;
+                    archivo[6] << 4*i-E_min << "\t" << 2*j-N << "\t" << entropia_2D[i][j] << "\t" << parametro_de_orden_microcanonico_promedio[i][j] << endl;
                 }
             }
         }
-        arch_entropia_2D_final.close();
+        archivo[6].close();
     }
     
     
@@ -1362,7 +1231,6 @@ class Wang_Landau_2D: public Algoritmo{
                 }
             }
         }
-        cout << "Renormalización: " << constante_de_renormalizacion << endl;
     }
     
     
@@ -1380,13 +1248,11 @@ class Wang_Landau_2D: public Algoritmo{
         double M=0;
         for (int i=0;i<t;i++){
             E = 4*i-E_min;
-//            cout << E << "--> ENERGÍA" << endl;
             for (int j=0;j<N+1;j++){
                 if(parametro_de_orden_microcanonico_promedio[i][j] != -1){ //aquí no utilizo prob condic
                     M = 2*j-N;
                     exponente = entropia_2D[i][j] - (beta)*(E-J2*h*M) - constante_de_renormalizacion;
                     funcion_de_particion_2D += exp(exponente);
-            //                cout << "FP: " << funcion_de_particion_2D << endl;
                     energia_promedio += (abs(E))*exp(exponente);
                     energia_promedio_cuadrada += (abs(E*E))*exp(exponente);
                     magnetizacion_promedio += (abs(M))*exp(exponente);
@@ -1396,11 +1262,6 @@ class Wang_Landau_2D: public Algoritmo{
                 }
             }
         }
-    
-//      cout << "función de partición: " << funcion_de_particion_2D << endl;
-//      cout << "energia promedio: " << energia_promedio << endl;
-//      cout << "funcion_de_particion al cuadrado: " << funcion_de_particion_2D*funcion_de_particion_2D << endl;
-//      cout << "energia_promedio_cuadrada: " << energia_promedio_cuadrada << endl;
         resultados[0][k] = (energia_promedio_cuadrada/funcion_de_particion_2D - (energia_promedio*energia_promedio)/(funcion_de_particion_2D*funcion_de_particion_2D))*(1./N);
         resultados[1][k] = magnetizacion_promedio/(N*funcion_de_particion_2D);
         resultados[2][k] = (magnetizacion_cuadrada_promedio/funcion_de_particion_2D - (magnetizacion_promedio*magnetizacion_promedio)/(funcion_de_particion_2D*funcion_de_particion_2D))/N;
@@ -1409,7 +1270,7 @@ class Wang_Landau_2D: public Algoritmo{
     }
     
     
-    void imprimir_resultados(){
+/*    void imprimir_resultados(){
         arch_cap_cal << endl << endl;
         arch_magnet << endl << endl;
         arch_sucep_magnet << endl << endl;
@@ -1434,44 +1295,20 @@ class Wang_Landau_2D: public Algoritmo{
             temperatura += 0.1;
         }
     //  cout << "número de refinamientos: " << numero_de_refinamientos -1 << endl;
-    }
+    }*/
     
     
-    void graficar(){  
-       graf.str("");
-        graf << "f=1.0" << endl;
-        graf << "set term wxt 0 " << endl;
-/*        graf << "set title 'Capacidad_calorifica' " << endl;
-        graf << "plot \"Capacidad_calorifica_L_" << L << "_h_" << h << ".txt\" u 1:2 w lp " << endl;
-        graf << "set term wxt 1 " << endl;
-        graf << "set title 'Magnetizacion' " << endl;
-        graf << "plot \"Magnetizacion_L_" << L << "_h_" << h << ".txt\" u 1:2 w lp " << endl;
-        graf << "set term wxt 2 " << endl;
-        graf << "set title 'Suceptibilidad_magnetica'" << endl;
-        graf << "plot \"Suceptibilidad_magnetica_L_" << L << "_h_" << h << ".txt\" u 1:2 w lp" << endl;
-        graf << "set term wxt 3" << endl;
-        graf << "set title 'Cumulante_de_binder'" << endl;
-        graf << "plot \"Cumulante_de_binder_L_" << L << "_h_" << h << ".txt\" u 1:2 w lp" << endl;
-        graf << "set term wxt 4" << endl;
-        graf << "set title 'Parametro_de_orden'" << endl;
-        graf << "plot \"Parametro_de_orden_L_" << L << "_h_" << h << ".txt\" u 1:2 w lp" << endl;*/
-//        graf << "set term wxt 7" << endl;
-//        graf << "set title 'Entropia_final'" << endl;
-        
-//        graf << "set terminal postscript" << endl;
-//        graf << "set output '| ps2pdf - output.pdf' " << endl;
-        graf << "splot \"Entropia_2D_"  << especificacion << ".txt\"  index " << numero_de_refinamientos-1 << " u 1:2:3 " << endl;
-
-        FILE* gp;  // gnuplot es un puntero al objeto de tipo FILE
-
-        gp = popen("gnuplot --persist", "w");
-
-        fprintf(gp, "%s\n", graf.str().c_str());
-        fflush(gp);
-        fflush(gpt);
-        //cout << endl;
-        //int espera;
-        //cin >> espera;
+    void graficar(){
+        graf << "encabezado = system('head -1 " << flujo[6].str().c_str() << " ')" << endl;
+        graf << "set xlabel word(encabezado,1)" << endl;
+        graf << "set ylabel word(encabezado,2)" << endl;
+        graf << "set zlabel word(encabezado,3)" << endl;
+        graf << "splot \"" << flujo[6].str().c_str() << "\" using 1:2:3 title columnheader" << endl;
+        fprintf(gp[1], "%s\n", graf.str().c_str());
+        fflush(gp[1]);
+/*        cout << endl;
+        int espera;
+        cin >> espera;*/
     }
     
 };

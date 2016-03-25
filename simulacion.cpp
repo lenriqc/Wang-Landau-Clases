@@ -3,6 +3,7 @@
 #include <sstream>
 #include <fstream>
 #include <string>
+#include <sys/stat.h>
 #include "algoritmo.h"
 
 using namespace std;

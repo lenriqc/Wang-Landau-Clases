@@ -83,8 +83,8 @@ class Red_Cuadrada: public Red{
       
       void geometria(){
   
-	cout << "L = " << L << endl;
-	cout << "N = " << N << endl;
+//	cout << "L = " << L << endl;
+//	cout << "N = " << N << endl;
 	int b;
 	for(int i=0;i<N; i++){
 	  b=(i+L)%L;
@@ -269,8 +269,8 @@ class Red_Triangular: public Red{
       
       void geometria(){
   
-	cout << "L = " << L << endl;
-	cout << "N = " << N << endl;
+//	cout << "L = " << L << endl;
+//	cout << "N = " << N << endl;
 	int b;
 	int c;
 	

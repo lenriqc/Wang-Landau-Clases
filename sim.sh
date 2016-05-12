@@ -6,8 +6,22 @@
 #  Created by Luis Enrique Quintanar Cortés on 13/01/15.
 #
 #!/bin/bash
-#./simulacion 2 2 2 20 0 1
-./simulacion 2 1 3 $1 0 0.0001 $2 2 100
+
+red=${red:-cuadrada}
+modelo=${modelo:-Ising-ferro}
+algoritmo=${algoritmo:-WL2D}
+L=${L:-16}
+h=${h:-0}
+f=${f:-0.0001}
+caminantes=${caminantes:-10}
+max_bloques=${max_bloques:-no}
+frec_animacion=${animar:-no}
+numero_de_simulacion=${numero_de_simulacion:-no}
+
+echo $caminantes
+echo $max_bloques
+
+./simulacion $red $modelo $algoritmo $L $h $f $caminantes $max_bloques  $frec_animacion $numero_de_simulacion
 
 # primer argumento: tipo de red: 1-cuad 2-triang
 # Segundo argumento: Tipo de modelo: 1-Ising    2-Antiferro
@@ -15,8 +29,8 @@
 # Cuarto argumento: Longitud de la red por lado
 # Quinto argumento: Campo externo
 # Sexto argumento: Límite de factor de modificación
-# Séptimo argumento: número de caminantes
-# Octavo argumento: 1-animar-histograma 2-mostrar observables
-# Noveno argumento: Número de sweeps por cada histograma
+# Séptimo argumento: Número de caminantes
+# Octavo argumento: Máximo número de bloques de sweeps
+# Noveno argumento: Frecuencia de graficado. En cantidad de series de sweeps
+# Décimo argumento: Número de repetición de la simulación
 
-#2 tipo de red

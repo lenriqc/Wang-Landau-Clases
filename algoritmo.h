@@ -181,7 +181,7 @@ class Wang_Landau_1D: public Algoritmo{
     
     
     public:
-    Wang_Landau_1D(vector<Modelo*> mod, string descripcion, int Caminantes, int l_de_red, double h_exter,  double factor_min, int vecinos, int Anim, int frec_de_anim): h(h_exter ) {
+    Wang_Landau_1D(vector<Modelo*> mod, string descripcion, int Caminantes, int l_de_red, double h_exter,  double factor_min, int vecinos, int frec_de_anim): h(h_exter ) {
         especificacion = descripcion;
         f_minima = factor_min;
         frecuencia_de_animacion = frec_de_anim;
@@ -207,7 +207,12 @@ class Wang_Landau_1D: public Algoritmo{
         E_min = (vecinos/2)*N;
         s = E_min/4;
         t = vecinos*N/paso + 1;
-        anima = Anim;
+        if (frecuencia_de_animacion != 0) {
+            anima = 1;
+        }
+        else {
+            anima = 0;
+        }
         //VECTORES
         entropia_1D.resize(t);
         histograma_1D.resize(t); //no aparece en wl2d
@@ -285,6 +290,11 @@ class Wang_Landau_1D: public Algoritmo{
         //imprimir_resultados();
         //
         graficar();
+        
+        remove(flujo[1].str().c_str());
+        remove(flujo[2].str().c_str());
+        remove(flujo[3].str().c_str());
+        remove(flujo[4].str().c_str());
     }
     
     
@@ -739,16 +749,16 @@ class Wang_Landau_2D: public Algoritmo{
     int a;
     int E_min;
     int J1, J2;
-    double numero_de_refinamientos;
-    double logaritmo_de_factor_de_modificacion;
-    double beta;
-    double temperatura;
+    double numero_de_refinamientos, logaritmo_de_factor_de_modificacion;
+    double beta, temperatura;
     double constante_de_renormalizacion;
     int cantidad_de_datos;
+    int tiempo_de_simulacion, contador_de_sweeps, contador_de_bloques, num_max_de_bloques, contador_de_animacion;
+    string cantidad_max_de_bloques;
     int anima;
-    int numero_de_sweeps;
-    int contador_de_sweeps;
     int frecuencia_de_animacion;
+    int condicion_de_histograma;
+    bool proposicion_de_bloques_max;
     FILE* gp[2];
     int estatus;
     string nombre[13];
@@ -772,12 +782,19 @@ class Wang_Landau_2D: public Algoritmo{
     ostringstream graf, anim, cad_datos_del_sistema;
     //
     public:
-    Wang_Landau_2D(vector<Modelo*> mod, string descripcion, int Caminantes, int l_de_red, double h_exter, double factor_min, int vecinos, int Anim, int frec_de_anim):h(h_exter) {
+    Wang_Landau_2D(vector<Modelo*> mod, string descripcion, int Caminantes, int l_de_red, double h_exter, double factor_min, char *lim_de_bloques_de_sweeps, int vecinos, int frec_de_anim=0):h(h_exter) {
         especificacion = descripcion;
         f_minima = factor_min;
         frecuencia_de_animacion = frec_de_anim;
-        numero_de_sweeps = 1000;
+        tiempo_de_simulacion = 0;
         contador_de_sweeps = 0;
+        contador_de_bloques = 0;
+        cantidad_max_de_bloques = string(lim_de_bloques_de_sweeps);
+        if (string(lim_de_bloques_de_sweeps) !="no") {
+            num_max_de_bloques = atoi(lim_de_bloques_de_sweeps);
+            
+        }
+        contador_de_animacion = 0;
         caminantes = Caminantes;
         M.resize(caminantes);
         for (int i=0; i<caminantes; i++) {
@@ -787,6 +804,7 @@ class Wang_Landau_2D: public Algoritmo{
         logaritmo_de_factor_de_modificacion = 1;
         L = l_de_red;
         N = L*L;
+        condicion_de_histograma = 10;
         f = 1;
         numero_de_refinamientos = 0;
         temperatura = 0.5;
@@ -798,8 +816,14 @@ class Wang_Landau_2D: public Algoritmo{
         E_min = (vecinos/2)*N;
         s = E_min/4;
         t = vecinos*N/paso + 1;
-        anima = Anim;
-        //VECTORES
+        if (frecuencia_de_animacion != 0) {
+            anima = 1;
+        }
+        else {
+            anima = 0;
+        }
+        
+                //VECTORES
         entropia_1D.resize(t);
         histograma_1D.resize(t);
         entropia_2D.resize(t);
@@ -864,6 +888,9 @@ class Wang_Landau_2D: public Algoritmo{
         //
         estimar_entropia_2D();
         //
+        cout << "Tiempo total de simulación: " << tiempo_de_simulacion << endl;
+        cout << "Número de bloques totales: " << contador_de_bloques << endl;
+        //
         calcular_parametro_de_orden_microcanonico_promedio();
         //
         estimar_entropia_1D();
@@ -926,6 +953,17 @@ class Wang_Landau_2D: public Algoritmo{
             
         }
         archivo[0].close();
+    }
+    
+    int condicion_de_bloques_max(){
+        if (cantidad_max_de_bloques == "no") {
+            proposicion_de_bloques_max = true;
+        }
+        else {
+            proposicion_de_bloques_max = contador_de_bloques<num_max_de_bloques;
+        }
+
+        return proposicion_de_bloques_max;
     }
 
     
@@ -1026,6 +1064,7 @@ class Wang_Landau_2D: public Algoritmo{
     
     
     void proponer_cambio_configuracional(Modelo *MOD){
+        tiempo_de_simulacion++;
         a = MOD->elegir_espin();
         MOD->Energia_nueva = MOD->Energia + MOD->cambio_en_energia_configuracional(a);
         MOD->Magnetizacion_nueva = MOD->Magnetizacion + MOD->cambio_en_magnetizacion(a);
@@ -1061,6 +1100,7 @@ class Wang_Landau_2D: public Algoritmo{
     
     
     void sweep(){
+        contador_de_sweeps++;
         for (int i=0;i<N/caminantes;i++){
             for (int j=0; j<caminantes; j++) {
                 proponer_cambio_configuracional(M[j]);
@@ -1071,13 +1111,14 @@ class Wang_Landau_2D: public Algoritmo{
     
     
     void varios_sweeps(){
-        for (int i=0; i<numero_de_sweeps; i++) {
+        contador_de_bloques++;
+        for (int i=0; i<condicion_de_histograma; i++) {
             sweep();
-            contador_de_sweeps++;
+            contador_de_animacion++;
             if (contador_de_sweeps<frecuencia_de_animacion) {
             }
             else {
-                contador_de_sweeps = 1;
+                contador_de_animacion = 0;
                 if (anima==1) {
                     datos_de_histograma();
                     grafica_evolucion_de_histograma();
@@ -1135,24 +1176,32 @@ class Wang_Landau_2D: public Algoritmo{
 
 
     void estimar_entropia_2D(){
-        while (f>f_minima){
-            varios_sweeps();
+        while (f>f_minima && condicion_de_bloques_max()){
             cout << "f: " << f << endl;
+            varios_sweeps();
             int k=0;
+            if (!condicion_de_bloques_max()) {
+                k=t;
+            }
             while (k<t){
                 int l=0;
                 while (l<N+1){
-                    if ((histograma_2D[k][l] >= 10) || (histograma_2D[k][l] == -1)) {
+                    if ((histograma_2D[k][l] > condicion_de_histograma-1) || (histograma_2D[k][l] == -1)) {
                             l++;
                     }
                     else {
                         varios_sweeps();
+                        if (!condicion_de_bloques_max()) {
+                            l=N+1;
+                            k=t;
+                        }
                     }
                 }
                 k++;
             }
+            //
             renormalizar_entropia_2D();
-            archivo[4] << endl << endl;
+/*            archivo[4] << endl << endl;
             archivo[2] << endl << endl;
             for (int i=0; i<t; i++){
                 for (int j=0; j<N+1; j++){
@@ -1161,7 +1210,7 @@ class Wang_Landau_2D: public Algoritmo{
                         archivo[2] << 4*i-E_min << "\t" << 2*j-N << "\t" << histograma_2D[i][j] << endl;
                     }
                 }
-            }
+            }*/
             alterar_logaritmo_de_factor_de_modificacion();
             numero_de_refinamientos++;
             reiniciar_histograma_2D();
@@ -1176,7 +1225,7 @@ class Wang_Landau_2D: public Algoritmo{
                     entropia_1D[i] += log(entropia_2D[i][j]);
                 }
             }
-            archivo[3] << 4*i-E_min << "\t" << entropia_1D[i] << endl;
+//            archivo[3] << 4*i-E_min << "\t" << entropia_1D[i] << endl;
         }
     }
 

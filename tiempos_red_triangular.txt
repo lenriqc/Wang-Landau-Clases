@@ -1,0 +1,21 @@
+
+real	0m1.967s
+user	0m1.460s
+sys	0m0.224s
+
+real	13m20.778s
+user	12m55.828s
+sys	0m23.696s
+
+real	12021m20.248s
+user	11977m33.224s
+sys	34m21.152s
+terminate called after throwing an instance of 'std::bad_alloc'
+  what():  std::bad_alloc
+Aborted (core dumped)
+
+real	1m8.216s
+user	0m0.252s
+sys	0m2.240s
+         line 0: out of memory for expanding curve points
+

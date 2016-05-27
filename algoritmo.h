@@ -782,7 +782,7 @@ class Wang_Landau_2D: public Algoritmo{
     ostringstream graf, anim, cad_datos_del_sistema;
     //
     public:
-    Wang_Landau_2D(vector<Modelo*> mod, string descripcion, int Caminantes, int l_de_red, double h_exter, double factor_min, char *lim_de_bloques_de_sweeps, int vecinos, int frec_de_anim=0):h(h_exter) {
+    Wang_Landau_2D(vector<Modelo*> mod, string descripcion, int Caminantes, int l_de_red, double h_exter, double factor_min, char *lim_de_bloques_de_sweeps, int vecinos, int frec_de_anim):h(h_exter) {
         especificacion = descripcion;
         f_minima = factor_min;
         frecuencia_de_animacion = frec_de_anim;
@@ -804,7 +804,7 @@ class Wang_Landau_2D: public Algoritmo{
         logaritmo_de_factor_de_modificacion = 1;
         L = l_de_red;
         N = L*L;
-        condicion_de_histograma = 10;
+        condicion_de_histograma = 100;
         f = 1;
         numero_de_refinamientos = 0;
         temperatura = 0.5;

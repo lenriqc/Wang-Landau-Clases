@@ -1,0 +1,90 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXFileReference section */
+		C5142C361CDAE3BA001CFBB6 /* serie_de_sim_todo_constante.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = serie_de_sim_todo_constante.sh; sourceTree = "<group>"; };
+		C54167201C72FEC3008872BF /* aleatorios.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = aleatorios.h; sourceTree = "<group>"; };
+		C54167211C72FEC3008872BF /* algoritmo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = algoritmo.h; sourceTree = "<group>"; };
+		C54167221C72FEC3008872BF /* comp.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = comp.sh; sourceTree = "<group>"; };
+		C54167231C72FEC3008872BF /* modelo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = modelo.h; sourceTree = "<group>"; };
+		C54167241C72FEC3008872BF /* red.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = red.h; sourceTree = "<group>"; };
+		C54167261C72FEC3008872BF /* sim.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = sim.sh; sourceTree = "<group>"; };
+		C54167271C72FEC3008872BF /* simulacion.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = simulacion.cpp; sourceTree = "<group>"; };
+		C5AA8E241CD0FCB40077B8C7 /* loop_en_caminantes.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = loop_en_caminantes.sh; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		C54167191C72FD69008872BF = {
+			isa = PBXGroup;
+			children = (
+				C54167201C72FEC3008872BF /* aleatorios.h */,
+				C54167211C72FEC3008872BF /* algoritmo.h */,
+				C54167221C72FEC3008872BF /* comp.sh */,
+				C54167231C72FEC3008872BF /* modelo.h */,
+				C54167241C72FEC3008872BF /* red.h */,
+				C54167261C72FEC3008872BF /* sim.sh */,
+				C54167271C72FEC3008872BF /* simulacion.cpp */,
+				C5AA8E241CD0FCB40077B8C7 /* loop_en_caminantes.sh */,
+				C5142C361CDAE3BA001CFBB6 /* serie_de_sim_todo_constante.sh */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXProject section */
+		C541671A1C72FD69008872BF /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0730;
+			};
+			buildConfigurationList = C541671D1C72FD69008872BF /* Build configuration list for PBXProject "WL-CLASES" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = C54167191C72FD69008872BF;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+			);
+		};
+/* End PBXProject section */
+
+/* Begin XCBuildConfiguration section */
+		C541671E1C72FD69008872BF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ENABLE_TESTABILITY = YES;
+				ONLY_ACTIVE_ARCH = YES;
+			};
+			name = Debug;
+		};
+		C541671F1C72FD69008872BF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		C541671D1C72FD69008872BF /* Build configuration list for PBXProject "WL-CLASES" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C541671E1C72FD69008872BF /* Debug */,
+				C541671F1C72FD69008872BF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = C541671A1C72FD69008872BF /* Project object */;
+}

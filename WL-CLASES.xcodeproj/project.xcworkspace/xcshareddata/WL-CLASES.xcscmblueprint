@@ -1,0 +1,30 @@
+{
+  "DVTSourceControlWorkspaceBlueprintPrimaryRemoteRepositoryKey" : "CDC8D5F8DAB02BDC4850278ED45579723581E442",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyRepositoryLocationsKey" : {
+
+  },
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyStatesKey" : {
+    "01A080FC39144DF3F56E885084AE773E64E6FB9B" : 0,
+    "CDC8D5F8DAB02BDC4850278ED45579723581E442" : 0
+  },
+  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "36215758-D416-4EE2-B922-AD51E532DFE6",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
+    "01A080FC39144DF3F56E885084AE773E64E6FB9B" : "",
+    "CDC8D5F8DAB02BDC4850278ED45579723581E442" : "Wang-Landau_con_clases\/"
+  },
+  "DVTSourceControlWorkspaceBlueprintNameKey" : "WL-CLASES",
+  "DVTSourceControlWorkspaceBlueprintVersion" : 204,
+  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "WL-CLASES.xcodeproj",
+  "DVTSourceControlWorkspaceBlueprintRemoteRepositoriesKey" : [
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/lenriqc\/WL-CLASES.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "01A080FC39144DF3F56E885084AE773E64E6FB9B"
+    },
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/lenriqc\/Wang-Landau-Clases.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "CDC8D5F8DAB02BDC4850278ED45579723581E442"
+    }
+  ]
+}

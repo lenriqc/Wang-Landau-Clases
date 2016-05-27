@@ -56,6 +56,7 @@ int main(int argc, char *argv[]){
     }
     
     if (string(argv[9])=="no") {
+        frec_de_grafica = 0;
     }
     else {
         frec_de_grafica = atoi(argv[9]);

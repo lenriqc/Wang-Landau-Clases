@@ -7,13 +7,13 @@
 #
 #!/bin/bash
 
-red=${red:-cuadrada}
-modelo=${modelo:-Ising-ferro}
+red=${red:-triangular}
+modelo=${modelo:-Ising-antiferro}
 algoritmo=${algoritmo:-WL2D}
-L=${L:-16}
+L=${L:-18}
 h=${h:-0}
 f=${f:-0.0001}
-caminantes=${caminantes:-10}
+caminantes=${caminantes:-30}
 max_bloques=${max_bloques:-no}
 frec_animacion=${frec_animacion:-no}
 numero_de_simulacion=${numero_de_simulacion:-no}
